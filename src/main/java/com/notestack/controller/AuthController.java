@@ -29,7 +29,10 @@ public class AuthController {
         if (userRepository.existsByUsername(request.username)) {
             return ResponseEntity.badRequest().body(new MessageResponse("Username already taken"));
         }
-        User user = new User(request.username, passwordEncoder.encode(request.password));
+        if (userRepository.existsByEmail(request.email)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Email already in use"));
+        }
+        User user = new User(request.username, request.email, passwordEncoder.encode(request.password));
         userRepository.save(user);
         return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
@@ -37,7 +40,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username, request.password));
+                new UsernamePasswordAuthenticationToken(request.usernameOrEmail, request.password));
         String token = jwtUtils.generateToken(auth.getName());
         return ResponseEntity.ok(new JwtResponse(token, auth.getName()));
     }
