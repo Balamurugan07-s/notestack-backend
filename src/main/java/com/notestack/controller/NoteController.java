@@ -29,13 +29,17 @@ public class NoteController {
 
     @GetMapping
     public List<Note> getAllNotes() {
+        return noteRepository.findAll();
+    }
+
+    @GetMapping("/my")
+    public List<Note> getMyNotes() {
         return noteRepository.findByUserId(currentUser().getId());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Note> getNoteById(@PathVariable Long id) {
         return noteRepository.findById(id)
-                .filter(n -> n.getUser().getId().equals(currentUser().getId()))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
