@@ -1,14 +1,23 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 
 let mongod = null;
 
 export const connectDB = async () => {
   try {
-    let dbUrl = process.env.NODE_ENV === 'test' ? null : process.env.MONGODB_URI;
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isTest = process.env.NODE_ENV === 'test';
+
+    let dbUrl = isTest ? null : process.env.MONGODB_URI;
 
     if (!dbUrl) {
+      if (isProduction) {
+        throw new Error(
+          '❌ MONGODB_URI is missing in production. Set it in your host\'s environment variables.'
+        );
+      }
+
       console.log('⚠️ No MONGODB_URI found in env. Initializing local In-Memory MongoDB Server...');
+      const { MongoMemoryServer } = await import('mongodb-memory-server');
       mongod = await MongoMemoryServer.create();
       dbUrl = mongod.getUri();
       console.log(`🚀 In-Memory MongoDB Server started dynamically at: ${dbUrl}`);
