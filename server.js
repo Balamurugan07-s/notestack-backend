@@ -39,15 +39,29 @@ app.use('/api/queries', queryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Base Status Route
-app.get('/', (req, res) => {
-  res.json({ success: true, message: 'NoteStack Security-Hardened API is running' });
-});
+// Serve frontend static assets in production
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(process.cwd(), '../client/dist');
+  app.use(express.static(distPath));
 
-// Route Not Found fallback
-app.use('*', (req, res) => {
-  res.status(404).json({ success: false, error: 'Resource path not found' });
-});
+  app.get('*', (req, res) => {
+    // If it is an API route, send JSON 404 instead of index.html
+    if (req.originalUrl.startsWith('/api/')) {
+      return res.status(404).json({ success: false, error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  // Base Status Route
+  app.get('/', (req, res) => {
+    res.json({ success: true, message: 'NoteStack Security-Hardened API is running' });
+  });
+
+  // Route Not Found fallback
+  app.use('*', (req, res) => {
+    res.status(404).json({ success: false, error: 'Resource path not found' });
+  });
+}
 
 // Global Error Handler Middleware
 app.use(errorHandler);
